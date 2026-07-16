@@ -89,6 +89,8 @@ CREATE TABLE IF NOT EXISTS public.topics
     sort_order integer NOT NULL DEFAULT 0,
     is_hidden boolean NOT NULL DEFAULT false,
     is_completed boolean NOT NULL DEFAULT false,
+    is_in_progress boolean NOT NULL DEFAULT false,
+    is_ready_to_pickup boolean NOT NULL DEFAULT false,
     is_archived boolean NOT NULL DEFAULT false,
     completed_at timestamptz,
     last_synced_at timestamptz NOT NULL DEFAULT now(),

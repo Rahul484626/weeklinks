@@ -11,6 +11,8 @@ type TopicRow = {
   sort_order: number;
   is_hidden: boolean;
   is_completed: boolean;
+  is_in_progress: boolean;
+  is_ready_to_pickup: boolean;
   is_archived: boolean;
   completed_at: string | null;
   last_synced_at: string;
@@ -27,6 +29,8 @@ export type Topic = {
   sortOrder: number;
   isHidden: boolean;
   isCompleted: boolean;
+  isInProgress: boolean;
+  isReadyToPickup: boolean;
   isArchived: boolean;
   completedAt: string | null;
   lastSyncedAt: string;
@@ -44,6 +48,8 @@ function rowToTopic(row: TopicRow): Topic {
     sortOrder: row.sort_order,
     isHidden: row.is_hidden,
     isCompleted: row.is_completed,
+    isInProgress: row.is_in_progress,
+    isReadyToPickup: row.is_ready_to_pickup,
     isArchived: row.is_archived,
     completedAt: row.completed_at,
     lastSyncedAt: row.last_synced_at,
@@ -136,6 +142,8 @@ export async function syncTopicsFromDrive(userId: string) {
 
 export type TopicPatch = {
   isCompleted?: boolean;
+  isInProgress?: boolean;
+  isReadyToPickup?: boolean;
   displayName?: string | null;
   sortOrder?: number;
   isHidden?: boolean;
@@ -156,6 +164,28 @@ export async function updateTopic(
   if (typeof patch.isCompleted === "boolean") {
     updates.is_completed = patch.isCompleted;
     updates.completed_at = patch.isCompleted ? new Date().toISOString() : null;
+    if (patch.isCompleted) {
+      updates.is_in_progress = false;
+      updates.is_ready_to_pickup = false;
+    }
+  }
+
+  if (typeof patch.isInProgress === "boolean") {
+    updates.is_in_progress = patch.isInProgress;
+    if (patch.isInProgress) {
+      updates.is_completed = false;
+      updates.completed_at = null;
+      updates.is_ready_to_pickup = false;
+    }
+  }
+
+  if (typeof patch.isReadyToPickup === "boolean") {
+    updates.is_ready_to_pickup = patch.isReadyToPickup;
+    if (patch.isReadyToPickup) {
+      updates.is_completed = false;
+      updates.completed_at = null;
+      updates.is_in_progress = false;
+    }
   }
 
   if (patch.displayName !== undefined) {

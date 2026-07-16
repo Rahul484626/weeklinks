@@ -50,6 +50,12 @@ export function TopicList({ topics, onChange }: Props) {
   const completedCount = topics.filter(
     (t) => t.isCompleted && !t.isArchived,
   ).length;
+  const inProgressCount = topics.filter(
+    (t) => t.isInProgress && !t.isCompleted && !t.isArchived,
+  ).length;
+  const readyCount = topics.filter(
+    (t) => t.isReadyToPickup && !t.isCompleted && !t.isArchived,
+  ).length;
   const activeCount = topics.filter((t) => !t.isArchived).length;
 
   async function patchTopic(
@@ -121,6 +127,15 @@ export function TopicList({ topics, onChange }: Props) {
           of{" "}
           <span className="font-semibold text-zinc-900">{activeCount}</span>{" "}
           topics completed
+          {(inProgressCount > 0 || readyCount > 0) && (
+            <span className="mt-1 block text-xs text-zinc-500 sm:mt-0 sm:inline sm:before:content-['·_']">
+              {inProgressCount > 0 && (
+                <span>{inProgressCount} in progress</span>
+              )}
+              {inProgressCount > 0 && readyCount > 0 && ", "}
+              {readyCount > 0 && <span>{readyCount} ready to pickup</span>}
+            </span>
+          )}
         </p>
 
         <div className="flex flex-wrap gap-3 text-sm text-zinc-600">
@@ -187,6 +202,16 @@ export function TopicList({ topics, onChange }: Props) {
                   onToggleComplete={() =>
                     patchTopic(topic.id, {
                       isCompleted: !topic.isCompleted,
+                    })
+                  }
+                  onToggleInProgress={() =>
+                    patchTopic(topic.id, {
+                      isInProgress: !topic.isInProgress,
+                    })
+                  }
+                  onToggleReadyToPickup={() =>
+                    patchTopic(topic.id, {
+                      isReadyToPickup: !topic.isReadyToPickup,
                     })
                   }
                   onRename={async () => {

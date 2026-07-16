@@ -18,6 +18,8 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const topic = await updateTopic(session!.user.id, id, {
     isCompleted: body.isCompleted,
+    isInProgress: body.isInProgress,
+    isReadyToPickup: body.isReadyToPickup,
     displayName: body.displayName,
     sortOrder: body.sortOrder,
     isHidden: body.isHidden,
