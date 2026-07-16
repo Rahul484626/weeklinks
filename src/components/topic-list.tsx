@@ -17,6 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { TopicRow, type TopicItem } from "@/components/topic-row";
+import { topicStatusToPatch } from "@/components/topic-status-select";
 import { topicDisplayName } from "@/lib/utils";
 
 type Props = {
@@ -199,20 +200,8 @@ export function TopicList({ topics, onChange }: Props) {
                   key={topic.id}
                   topic={topic}
                   busy={busyId === topic.id}
-                  onToggleComplete={() =>
-                    patchTopic(topic.id, {
-                      isCompleted: !topic.isCompleted,
-                    })
-                  }
-                  onToggleInProgress={() =>
-                    patchTopic(topic.id, {
-                      isInProgress: !topic.isInProgress,
-                    })
-                  }
-                  onToggleReadyToPickup={() =>
-                    patchTopic(topic.id, {
-                      isReadyToPickup: !topic.isReadyToPickup,
-                    })
+                  onStatusChange={(status) =>
+                    patchTopic(topic.id, topicStatusToPatch(status))
                   }
                   onRename={async () => {
                     const current = topicDisplayName(topic);
