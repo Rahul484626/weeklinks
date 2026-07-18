@@ -18,7 +18,7 @@ export function usePageTransition() {
   return ctx;
 }
 
-export function Providers({ children, session }: { children: React.ReactNode; session: any }) {
+export function Providers({ children, session }: { children: React.ReactNode; session: unknown }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
