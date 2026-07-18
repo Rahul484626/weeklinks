@@ -118,23 +118,46 @@ export async function syncTopicsFromDrive(userId: string) {
   }
 
   const missing = existing.filter(
-    (topic) => !seenIds.has(topic.driveFolderId) && !topic.isArchived,
+    (topic) => !seenIds.has(topic.driveFolderId),
   );
 
   if (missing.length > 0) {
     const { error } = await supabase
       .from("topics")
-      .update({
-        is_archived: true,
-        last_synced_at: now,
-        updated_at: now,
-      })
+      .delete()
       .in(
         "id",
         missing.map((t) => t.id),
       );
 
     if (error) throw new Error(error.message);
+  }
+
+  // Reset drive_folder_id on ideas if the folder is no longer present in Google Drive
+  const { data: ideasWithFolders, error: ideasErr } = await supabase
+    .from("topic_ideas")
+    .select("id, drive_folder_id")
+    .eq("user_id", userId);
+
+  if (ideasErr) throw new Error(ideasErr.message);
+
+  const missingIdeas = (ideasWithFolders ?? []).filter(
+    (idea) => idea.drive_folder_id && !seenIds.has(idea.drive_folder_id)
+  );
+
+  if (missingIdeas.length > 0) {
+    const { error: updateIdeasErr } = await supabase
+      .from("topic_ideas")
+      .update({
+        drive_folder_id: null,
+        updated_at: now,
+      })
+      .in(
+        "id",
+        missingIdeas.map((i) => i.id)
+      );
+
+    if (updateIdeasErr) throw new Error(updateIdeasErr.message);
   }
 
   return getTopicsForUser(userId);

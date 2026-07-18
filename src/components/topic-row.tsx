@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TransitionLink } from "./providers";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { EyeOff, GripVertical } from "lucide-react";
@@ -87,7 +87,7 @@ export function TopicRow({
       />
 
       <div className="min-w-0 flex-1 flex flex-col">
-        <Link
+        <TransitionLink
           href={`/topics/${topic.id}`}
           className={cn(
             "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
@@ -97,7 +97,7 @@ export function TopicRow({
           )}
         >
           {name}
-        </Link>
+        </TransitionLink>
         {topic.updatedAt && (
           <span className="text-[11px] text-zinc-400">
             Updated {formatRelativeTime(topic.updatedAt)}

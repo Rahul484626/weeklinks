@@ -107,3 +107,22 @@ GRANT ALL ON TABLE public.topics TO service_role;
 
 -- After running this file, also run supabase/expose-next-auth.sql
 -- (or add next_auth in Dashboard → Data API → Exposed schemas).
+
+--
+-- Topic Ideas schema
+--
+
+CREATE TABLE IF NOT EXISTS public.topic_ideas
+(
+    id text PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES next_auth.users (id) ON DELETE CASCADE,
+    title text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS topic_ideas_user_id_created_at_idx
+    ON public.topic_ideas (user_id, created_at DESC);
+
+GRANT ALL ON TABLE public.topic_ideas TO postgres;
+GRANT ALL ON TABLE public.topic_ideas TO service_role;

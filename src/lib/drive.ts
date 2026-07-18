@@ -290,3 +290,29 @@ export async function deleteDriveFile(userId: string, fileId: string) {
     supportsAllDrives: true,
   });
 }
+
+export async function createTopicFolder(
+  userId: string,
+  name: string,
+): Promise<DriveFolder> {
+  const drive = await getDriveClient(userId);
+  const rootId = process.env.DRIVE_ROOT_FOLDER_ID?.trim();
+  const parents = rootId ? [rootId] : undefined;
+
+  const res = await drive.files.create({
+    requestBody: {
+      name,
+      mimeType: FOLDER_MIME,
+      parents,
+    },
+    fields: "id, name",
+    supportsAllDrives: true,
+  });
+
+  const { id, name: folderName } = res.data;
+  if (!id || !folderName) {
+    throw new Error("Failed to create folder in Drive: invalid response");
+  }
+
+  return { id, name: folderName };
+}
