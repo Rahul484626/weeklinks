@@ -4,6 +4,7 @@ import React, { createContext, useContext, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import Link, { LinkProps } from "next/link";
+import { Session } from "next-auth";
 
 type TransitionContextType = {
   isPending: boolean;
@@ -18,7 +19,7 @@ export function usePageTransition() {
   return ctx;
 }
 
-export function Providers({ children, session }: { children: React.ReactNode; session: unknown }) {
+export function Providers({ children, session }: { children: React.ReactNode; session: Session | null }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
