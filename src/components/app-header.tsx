@@ -17,13 +17,20 @@ export function AppHeader({ user, onSync, syncing }: Props) {
   return (
     <header className="border-b border-zinc-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
-            Weeklinks
-          </p>
-          <h1 className="text-lg font-semibold text-zinc-900">
-            Topic Tracker
-          </h1>
+        <div className="flex items-center gap-3">
+          <img
+            src="/icon.png"
+            alt=""
+            className="h-6 w-6 shrink-0 rounded-md object-contain sm:h-7 sm:w-7"
+          />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+              Weeklinks
+            </p>
+            <h1 className="text-lg font-semibold text-zinc-900">
+              Topic Tracker
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">

@@ -97,9 +97,10 @@ function TopicFilterSelect({
 type Props = {
   topics: TopicItem[];
   onChange: (topics: TopicItem[]) => void;
+  enableLongPressSelection?: boolean;
 };
 
-export function TopicList({ topics, onChange }: Props) {
+export function TopicList({ topics, onChange, enableLongPressSelection = false }: Props) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -487,6 +488,7 @@ export function TopicList({ topics, onChange }: Props) {
                     selectable={selectionMode}
                     selected={selectedIds.has(topic.id)}
                     onSelectToggle={() => toggleSelect(topic.id)}
+                    enableLongPressSelection={enableLongPressSelection}
                   />
                 ))}
               </ul>

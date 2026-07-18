@@ -105,7 +105,7 @@ export default function DashboardPage() {
             Loading topics…
           </div>
         ) : (
-          <TopicList topics={topics} onChange={setTopics} />
+          <TopicList topics={topics} onChange={setTopics} enableLongPressSelection={false} />
         )}
       </div>
     </AppLayout>

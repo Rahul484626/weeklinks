@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useRef } from "react";
 import { TransitionLink } from "./providers";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -35,6 +36,7 @@ type Props = {
   selectable?: boolean;
   selected?: boolean;
   onSelectToggle?: () => void;
+  enableLongPressSelection?: boolean;
 };
 
 export function TopicRow({
@@ -45,6 +47,7 @@ export function TopicRow({
   selectable,
   selected,
   onSelectToggle,
+  enableLongPressSelection = false,
 }: Props) {
   const {
     attributes,
@@ -62,11 +65,52 @@ export function TopicRow({
 
   const name = topicDisplayName(topic);
   const status = topicStatusFromItem(topic);
+  const longPressEnabled = enableLongPressSelection;
+
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef<boolean>(false);
+
+  function startLongPress() {
+    if (longPressEnabled && !selectable && onSelectToggle) {
+      longPressTriggeredRef.current = false;
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTriggeredRef.current = true;
+        onSelectToggle?.();
+      }, 400) as unknown as number;
+    }
+  }
+
+  function clearLongPress() {
+    if (typeof longPressTimerRef.current === "number") {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
+
+  const longPressHandlers = longPressEnabled
+    ? {
+        onTouchStart: () => startLongPress(),
+        onTouchEnd: () => clearLongPress(),
+        onTouchMove: () => clearLongPress(),
+        onTouchCancel: () => clearLongPress(),
+        onContextMenu: (e: React.MouseEvent<HTMLElement>) => {
+          e.preventDefault();
+          if (!selectable && onSelectToggle) {
+            longPressTriggeredRef.current = true;
+            onSelectToggle?.();
+            clearLongPress();
+          }
+        },
+      }
+    : {};
 
   return (
     <li
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        touchAction: longPressEnabled ? "manipulation" : undefined,
+      }}
       className={cn(
         "group flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-2 shadow-sm sm:px-3 sm:py-3",
         isDragging && "z-10 shadow-lg ring-2 ring-indigo-200",
@@ -76,21 +120,7 @@ export function TopicRow({
         topic.isArchived && "border-amber-200 bg-amber-50/50",
         busy && "opacity-70",
       )}
-      // support touch long-press selection
-      onTouchStart={(e: React.TouchEvent<HTMLElement>) => {
-        if (!selectable && onSelectToggle) {
-          // start long-press detection on touch devices
-          const target = e.currentTarget as HTMLElement & { _longpress?: number | null };
-          target._longpress = window.setTimeout(() => onSelectToggle?.(), 600) as unknown as number;
-        }
-      }}
-      onTouchEnd={(e: React.TouchEvent<HTMLElement>) => {
-        const target = e.currentTarget as HTMLElement & { _longpress?: number | null };
-        if (typeof target._longpress === "number") {
-          clearTimeout(target._longpress);
-          target._longpress = null;
-        }
-      }}
+      {...longPressHandlers}
     >
       <button
         type="button"
@@ -102,11 +132,7 @@ export function TopicRow({
         <GripVertical className="h-4 w-4" />
       </button>
 
-      <TopicStatusSelect
-        value={status}
-        busy={busy}
-        onChange={onStatusChange}
-      />
+      <TopicStatusSelect value={status} busy={busy} onChange={onStatusChange} />
 
       {/* selection checkbox for selection mode */}
       {selectable && (
@@ -140,6 +166,13 @@ export function TopicRow({
         ) : (
           <TransitionLink
             href={`/topics/${topic.id}`}
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              if (longPressTriggeredRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                longPressTriggeredRef.current = false;
+              }
+            }}
             className={cn(
               "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
               topic.isCompleted && "text-zinc-500 line-through",
@@ -151,9 +184,7 @@ export function TopicRow({
           </TransitionLink>
         )}
         {topic.updatedAt && (
-          <span className="text-[11px] text-zinc-400">
-            Updated {formatRelativeTime(topic.updatedAt)}
-          </span>
+          <span className="text-[11px] text-zinc-400">Updated {formatRelativeTime(topic.updatedAt)}</span>
         )}
       </div>
 
@@ -168,7 +199,6 @@ export function TopicRow({
             Hidden
           </span>
         )}
-
 
         <button
           type="button"
