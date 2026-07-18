@@ -63,9 +63,15 @@ export async function POST(request: Request, { params }: Params) {
         ? targetName.trim()
         : file.name;
 
+    const folderId = form.get("folderId");
+    const targetFolderId =
+      typeof folderId === "string" && folderId.trim()
+        ? folderId.trim()
+        : topic.driveFolderId;
+
     const uploaded = await uploadFileToFolder(
       session!.user.id,
-      topic.driveFolderId,
+      targetFolderId,
       {
         name: uploadName,
         mimeType,

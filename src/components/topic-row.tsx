@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { EyeOff, GripVertical, Pencil } from "lucide-react";
+import { EyeOff, GripVertical } from "lucide-react";
 import {
   TopicStatusSelect,
   topicStatusFromItem,
   type TopicStatus,
 } from "@/components/topic-status-select";
-import { cn, topicDisplayName } from "@/lib/utils";
+import { cn, topicDisplayName, formatRelativeTime } from "@/lib/utils";
 
 export type TopicItem = {
   id: string;
@@ -23,13 +23,13 @@ export type TopicItem = {
   isReadyToPickup: boolean;
   isArchived: boolean;
   completedAt: string | Date | null;
+  updatedAt?: string;
 };
 
 type Props = {
   topic: TopicItem;
   busy?: boolean;
   onStatusChange: (status: TopicStatus) => void;
-  onRename: () => void;
   onToggleHidden: () => void;
 };
 
@@ -37,7 +37,6 @@ export function TopicRow({
   topic,
   busy,
   onStatusChange,
-  onRename,
   onToggleHidden,
 }: Props) {
   const {
@@ -87,17 +86,24 @@ export function TopicRow({
         onChange={onStatusChange}
       />
 
-      <Link
-        href={`/topics/${topic.id}`}
-        className={cn(
-          "min-w-0 flex-1 truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
-          topic.isCompleted && "text-zinc-500 line-through",
-          topic.isInProgress && !topic.isCompleted && "text-sky-900",
-          topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+      <div className="min-w-0 flex-1 flex flex-col">
+        <Link
+          href={`/topics/${topic.id}`}
+          className={cn(
+            "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
+            topic.isCompleted && "text-zinc-500 line-through",
+            topic.isInProgress && !topic.isCompleted && "text-sky-900",
+            topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+          )}
+        >
+          {name}
+        </Link>
+        {topic.updatedAt && (
+          <span className="text-[11px] text-zinc-400">
+            Updated {formatRelativeTime(topic.updatedAt)}
+          </span>
         )}
-      >
-        {name}
-      </Link>
+      </div>
 
       <div className="flex shrink-0 items-center gap-1">
         {topic.isArchived && (
@@ -110,25 +116,8 @@ export function TopicRow({
             Hidden
           </span>
         )}
-        {topic.displayName && (
-          <span
-            className="hidden max-w-[120px] truncate text-[11px] text-zinc-400 sm:inline"
-            title={`Drive: ${topic.driveFolderName}`}
-          >
-            Drive: {topic.driveFolderName}
-          </span>
-        )}
 
-        <button
-          type="button"
-          onClick={onRename}
-          disabled={busy}
-          className="rounded-lg p-2 text-zinc-400 opacity-100 transition hover:bg-zinc-100 hover:text-zinc-700 sm:p-1.5 sm:opacity-0 sm:group-hover:opacity-100"
-          title="Rename in app"
-          aria-label="Rename topic"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
+
         <button
           type="button"
           onClick={onToggleHidden}

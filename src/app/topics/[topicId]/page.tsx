@@ -38,11 +38,7 @@ export default async function TopicPage({ params }: Props) {
               Back to topics
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-900">{name}</h1>
-            {topic.displayName && (
-              <p className="text-xs text-zinc-500">
-                Drive folder: {topic.driveFolderName}
-              </p>
-            )}
+
           </div>
           {topic.isArchived && (
             <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">

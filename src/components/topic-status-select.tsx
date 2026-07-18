@@ -26,28 +26,28 @@ const STATUS_OPTIONS: StatusOption[] = [
     value: "none",
     label: "Not started",
     icon: Circle,
-    triggerClassName: "text-zinc-600",
+    triggerClassName: "text-zinc-600 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:border-zinc-300",
     optionClassName: "text-zinc-700",
   },
   {
     value: "in_progress",
     label: "In progress",
     icon: PlayCircle,
-    triggerClassName: "text-sky-700",
+    triggerClassName: "text-sky-700 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300",
     optionClassName: "text-sky-700",
   },
   {
     value: "ready_to_pickup",
     label: "Ready to pickup",
     icon: Package,
-    triggerClassName: "text-emerald-700",
+    triggerClassName: "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300",
     optionClassName: "text-emerald-700",
   },
   {
     value: "completed",
     label: "Completed",
     icon: Check,
-    triggerClassName: "text-indigo-700",
+    triggerClassName: "text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300",
     optionClassName: "text-indigo-700",
   },
 ];
@@ -104,17 +104,18 @@ export function TopicStatusSelect({ value, busy, onChange }: Props) {
         aria-label={`Status: ${current.label}`}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex min-h-11 min-w-[9.5rem] items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-left text-xs font-medium shadow-sm transition sm:min-h-9 sm:min-w-[10.5rem] sm:text-sm",
-          "hover:border-zinc-300 hover:bg-zinc-50 active:bg-zinc-50",
+          "flex items-center justify-center gap-2 rounded-lg border shadow-sm transition",
+          // Mobile: small square button. Desktop: wider standard button.
+          "h-9 w-9 p-0 sm:h-9 sm:w-auto sm:min-w-[10.5rem] sm:px-2.5 sm:py-2",
           current.triggerClassName,
           busy && "pointer-events-none opacity-70",
         )}
       >
         <CurrentIcon className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="min-w-0 flex-1 truncate">{current.label}</span>
+        <span className="hidden sm:inline min-w-0 flex-1 truncate text-left text-xs font-medium sm:text-sm">{current.label}</span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 text-zinc-400 transition",
+            "hidden sm:block h-4 w-4 shrink-0 text-zinc-400 transition",
             open && "rotate-180",
           )}
           aria-hidden

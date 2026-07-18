@@ -30,6 +30,27 @@ export function formatDate(value: string | null | undefined): string {
   });
 }
 
+export function formatRelativeTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMs < 0) return "Just now"; // Handle future skew
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 const TEXT_EXTENSIONS = new Set([
   "txt",
   "md",
@@ -70,7 +91,7 @@ export function topicDisplayName(topic: {
   displayName?: string | null;
   driveFolderName: string;
 }): string {
-  return topic.displayName?.trim() || topic.driveFolderName;
+  return topic.driveFolderName;
 }
 
 export function splitFileName(name: string): { stem: string; ext: string } {

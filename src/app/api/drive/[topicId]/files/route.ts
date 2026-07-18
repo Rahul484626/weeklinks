@@ -5,7 +5,7 @@ import { listFolderFiles } from "@/lib/drive";
 
 type Params = { params: Promise<{ topicId: string }> };
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: Params) {
   const { session, error } = await requireSession();
   if (error) return error;
 
@@ -16,10 +16,13 @@ export async function GET(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Topic not found" }, { status: 404 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const targetFolderId = searchParams.get("folderId") || topic.driveFolderId;
+
   try {
     const files = await listFolderFiles(
       session!.user.id,
-      topic.driveFolderId,
+      targetFolderId,
     );
     return NextResponse.json({ topic, files });
   } catch (err) {
