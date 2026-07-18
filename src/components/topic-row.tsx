@@ -31,6 +31,10 @@ type Props = {
   busy?: boolean;
   onStatusChange: (status: TopicStatus) => void;
   onToggleHidden: () => void;
+  // selection props
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectToggle?: () => void;
 };
 
 export function TopicRow({
@@ -38,6 +42,9 @@ export function TopicRow({
   busy,
   onStatusChange,
   onToggleHidden,
+  selectable,
+  selected,
+  onSelectToggle,
 }: Props) {
   const {
     attributes,
@@ -69,6 +76,21 @@ export function TopicRow({
         topic.isArchived && "border-amber-200 bg-amber-50/50",
         busy && "opacity-70",
       )}
+      // support touch long-press selection
+      onTouchStart={(e: React.TouchEvent<HTMLElement>) => {
+        if (!selectable && onSelectToggle) {
+          // start long-press detection on touch devices
+          const target = e.currentTarget as HTMLElement & { _longpress?: number | null };
+          target._longpress = window.setTimeout(() => onSelectToggle?.(), 600) as unknown as number;
+        }
+      }}
+      onTouchEnd={(e: React.TouchEvent<HTMLElement>) => {
+        const target = e.currentTarget as HTMLElement & { _longpress?: number | null };
+        if (typeof target._longpress === "number") {
+          clearTimeout(target._longpress);
+          target._longpress = null;
+        }
+      }}
     >
       <button
         type="button"
@@ -86,18 +108,48 @@ export function TopicRow({
         onChange={onStatusChange}
       />
 
-      <div className="min-w-0 flex-1 flex flex-col">
-        <TransitionLink
-          href={`/topics/${topic.id}`}
+      {/* selection checkbox for selection mode */}
+      {selectable && (
+        <button
+          type="button"
+          onClick={onSelectToggle}
+          aria-pressed={selected}
           className={cn(
-            "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
-            topic.isCompleted && "text-zinc-500 line-through",
-            topic.isInProgress && !topic.isCompleted && "text-sky-900",
-            topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+            "mr-1 shrink-0 rounded p-1 text-zinc-600 hover:bg-zinc-100",
+            selected ? "bg-indigo-600 text-white" : "bg-white"
           )}
         >
-          {name}
-        </TransitionLink>
+          {selected ? "✓" : "○"}
+        </button>
+      )}
+
+      <div className="min-w-0 flex-1 flex flex-col">
+        {selectable ? (
+          <button
+            type="button"
+            onClick={onSelectToggle}
+            className={cn(
+              "truncate text-left text-sm font-medium text-zinc-900 hover:text-indigo-700",
+              topic.isCompleted && "text-zinc-500 line-through",
+              topic.isInProgress && !topic.isCompleted && "text-sky-900",
+              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+            )}
+          >
+            {name}
+          </button>
+        ) : (
+          <TransitionLink
+            href={`/topics/${topic.id}`}
+            className={cn(
+              "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
+              topic.isCompleted && "text-zinc-500 line-through",
+              topic.isInProgress && !topic.isCompleted && "text-sky-900",
+              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+            )}
+          >
+            {name}
+          </TransitionLink>
+        )}
         {topic.updatedAt && (
           <span className="text-[11px] text-zinc-400">
             Updated {formatRelativeTime(topic.updatedAt)}

@@ -106,6 +106,9 @@ export function TopicList({ topics, onChange }: Props) {
   const itemsPerPage = 50;
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const selectionMode = selectedIds.size > 0;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -229,6 +232,47 @@ export function TopicList({ topics, onChange }: Props) {
     } else {
       const data = await res.json();
       if (data.topics) onChange(data.topics);
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(visible.map((t) => t.id)));
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  async function bulkAction(action: "delete" | "createFolder") {
+    if (selectedIds.size === 0) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/topics/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ids: Array.from(selectedIds) }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Bulk action failed");
+      // refresh topics
+      const getRes = await fetch(`/api/topics`);
+      const getData = await getRes.json();
+      if (getRes.ok && getData.topics) {
+        onChange(getData.topics);
+      }
+      clearSelection();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk action failed");
     }
   }
 
@@ -389,6 +433,35 @@ export function TopicList({ topics, onChange }: Props) {
         </div>
       ) : (
         <>
+          {selectionMode && (
+            <div className="mb-3 flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-zinc-900">{selectedIds.size} selected</span>
+                <button type="button" onClick={selectAll} className="text-xs text-zinc-700 hover:underline">Select all</button>
+                <button type="button" onClick={clearSelection} className="text-xs text-zinc-700 hover:underline">Clear</button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm(`Delete ${selectedIds.size} selected topics? This cannot be undone.`)) return;
+                    await bulkAction("delete");
+                  }}
+                  className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => await bulkAction("createFolder")}
+                  className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
+                >
+                  Add folder to Drive
+                </button>
+              </div>
+            </div>
+          )}
+
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -410,6 +483,10 @@ export function TopicList({ topics, onChange }: Props) {
                     onToggleHidden={() =>
                       patchTopic(topic.id, { isHidden: !topic.isHidden })
                     }
+                    // selection props
+                    selectable={selectionMode}
+                    selected={selectedIds.has(topic.id)}
+                    onSelectToggle={() => toggleSelect(topic.id)}
                   />
                 ))}
               </ul>
