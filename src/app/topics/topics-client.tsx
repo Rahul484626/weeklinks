@@ -100,11 +100,19 @@ export function TopicsClient({ user }: Props) {
   const [filterStatus, setFilterStatus] = useState<"all" | "created" | "pending">("all");
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectionMode = selectedIds.size > 0;
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef<boolean>(false);
+
   // Modals / Actions states
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState<{ id: string; title: string } | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState<{ id: string; title: string } | null>(null);
   const [convertModalOpen, setConvertModalOpen] = useState<{ id: string; title: string } | null>(null);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkConvertModalOpen, setBulkConvertModalOpen] = useState(false);
 
   // Input states
   const [newTitle, setNewTitle] = useState("");
@@ -255,6 +263,92 @@ export function TopicsClient({ user }: Props) {
     }
   }
 
+  // Selection helpers
+  function toggleSelect(id: string) {
+    setSelectedIds((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function startLongPress(id: string) {
+    if (!selectionMode) {
+      longPressTriggeredRef.current = false;
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTriggeredRef.current = true;
+        toggleSelect(id);
+      }, 400) as unknown as number;
+    }
+  }
+
+  function clearLongPress() {
+    if (typeof longPressTimerRef.current === "number") {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  // Bulk actions
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    setActionBusy(true);
+    setError(null);
+    try {
+      const ids = Array.from(selectedIds);
+      await Promise.all(
+        ids.map((id) => fetch(`/api/topics/ideas/${id}`, { method: "DELETE" }))
+      );
+      setIdeas((prev) => prev.filter((idea) => !selectedIds.has(idea.id)));
+      clearSelection();
+      setBulkDeleteModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to bulk delete");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleBulkConvert() {
+    if (selectedIds.size === 0) return;
+    setActionBusy(true);
+    setError(null);
+    try {
+      const ids = Array.from(selectedIds);
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/topics/ideas/${id}/convert`, { method: "POST" }).then((res) => res.json())
+        )
+      );
+
+      const newFolders = new Map<string, string>();
+      ids.forEach((id, index) => {
+        if (results[index] && results[index].folderId) {
+          newFolders.set(id, results[index].folderId);
+        }
+      });
+
+      setIdeas((prev) =>
+        prev.map((idea) => {
+          const folderId = newFolders.get(idea.id);
+          return folderId ? { ...idea, driveFolderId: folderId } : idea;
+        })
+      );
+      setTopicsCount((prev) => (prev !== null ? prev + newFolders.size : newFolders.size));
+      clearSelection();
+      setBulkConvertModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create folders");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   // Filter logic
   const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -270,6 +364,10 @@ export function TopicsClient({ user }: Props) {
   const totalPages = Math.ceil(filteredIdeas.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedIdeas = filteredIdeas.slice(startIndex, startIndex + itemsPerPage);
+
+  function selectAll() {
+    setSelectedIds(new Set(filteredIdeas.map((t) => t.id)));
+  }
 
   return (
     <AppLayout
@@ -364,19 +462,95 @@ export function TopicsClient({ user }: Props) {
           </div>
         ) : (
           <div className="space-y-4">
+            {selectionMode && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/50 px-4 py-3 shadow-sm dark:border-indigo-900/50 dark:bg-indigo-950/30 gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{selectedIds.size} selected</span>
+                  <button type="button" onClick={selectAll} className="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-400">Select all</button>
+                  <button type="button" onClick={clearSelection} className="text-xs font-medium text-indigo-700 hover:underline dark:text-indigo-400">Clear</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    disabled={actionBusy}
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50 cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkConvertModalOpen(true)}
+                    disabled={actionBusy}
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 cursor-pointer"
+                  >
+                    {actionBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Add to Drive
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
-              {paginatedIdeas.map((idea) => (
+              {paginatedIdeas.map((idea) => {
+                const isSelected = selectedIds.has(idea.id);
+                return (
                 <div
                   key={idea.id}
-                  className="group relative rounded-2xl border border-zinc-200 bg-white p-3 sm:p-4 shadow-xs transition hover:shadow-sm hover:border-zinc-300 flex flex-col justify-between gap-2 sm:gap-4 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
+                  className={cn(
+                    "group relative rounded-2xl border border-zinc-200 bg-white p-3 sm:p-4 shadow-xs transition hover:shadow-sm flex flex-col justify-between gap-2 sm:gap-4 dark:border-zinc-800 dark:bg-zinc-950",
+                    selectionMode && isSelected 
+                      ? "ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/50 dark:ring-indigo-400 dark:border-indigo-400 dark:bg-indigo-900/20"
+                      : "hover:border-zinc-300 dark:hover:border-zinc-700"
+                  )}
+                  style={{ touchAction: "manipulation" }}
+                  onPointerDown={(e) => {
+                    if (e.pointerType === "mouse" && e.button !== 0) return;
+                    startLongPress(idea.id);
+                  }}
+                  onPointerUp={clearLongPress}
+                  onPointerLeave={clearLongPress}
+                  onPointerCancel={clearLongPress}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (!selectionMode) {
+                      longPressTriggeredRef.current = true;
+                      toggleSelect(idea.id);
+                      clearLongPress();
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (longPressTriggeredRef.current) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      longPressTriggeredRef.current = false;
+                      return;
+                    }
+                    if (selectionMode) {
+                      toggleSelect(idea.id);
+                    }
+                  }}
                 >
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-zinc-950 dark:text-zinc-50 break-words pr-12 dark:text-zinc-50">
-                      {idea.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium mt-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>Added {formatRelativeTime(idea.createdAt)}</span>
+                  <div className="flex items-start gap-3">
+                    {selectionMode && (
+                      <button
+                        type="button"
+                        className={cn(
+                          "mt-0.5 shrink-0 rounded p-1 text-zinc-600 dark:text-zinc-400",
+                          isSelected ? "bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white" : "bg-white border border-zinc-300 dark:bg-zinc-950 dark:border-zinc-700"
+                        )}
+                        style={{ width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        {isSelected ? <span className="text-xs">✓</span> : null}
+                      </button>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xs sm:text-sm font-bold text-zinc-950 dark:text-zinc-50 break-words pr-12 dark:text-zinc-50">
+                        {idea.title}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium mt-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>Added {formatRelativeTime(idea.createdAt)}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -421,7 +595,7 @@ export function TopicsClient({ user }: Props) {
                     )}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Pagination Controls */}
@@ -624,6 +798,80 @@ export function TopicsClient({ user }: Props) {
                 >
                   {actionBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {actionBusy ? "Creating…" : "Create"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Bulk Delete Modal */}
+        {bulkDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
+              onClick={() => setBulkDeleteModalOpen(false)}
+            />
+            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50 dark:border-zinc-800 dark:bg-zinc-950">
+              <div>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Bulk Delete Topics</h3>
+                <p className="text-xs font-medium text-zinc-500 mt-1">
+                  Are you sure you want to delete <span className="font-semibold text-zinc-900 dark:text-zinc-100">{selectedIds.size}</span> selected topics? This action is permanent.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => setBulkDeleteModalOpen(false)}
+                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={handleBulkDelete}
+                  className="px-3.5 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold transition cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  {actionBusy ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Convert Modal */}
+        {bulkConvertModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
+              onClick={() => setBulkConvertModalOpen(false)}
+            />
+            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50 dark:border-zinc-800 dark:bg-zinc-950">
+              <div>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Bulk Create Drive Folders</h3>
+                <p className="text-xs font-medium text-zinc-500 mt-1">
+                  This will create new folders for <span className="font-semibold text-zinc-900 dark:text-zinc-100">{selectedIds.size}</span> selected topics inside your root topics directory in Google Drive. Confirm?
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => setBulkConvertModalOpen(false)}
+                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={handleBulkConvert}
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {actionBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {actionBusy ? "Creating…" : "Create Folders"}
                 </button>
               </div>
             </div>

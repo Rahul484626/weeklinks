@@ -29,9 +29,9 @@ export function DashboardClient({ user }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/topics");
+        const res = await fetch("/api/topics/sync", { method: "POST" });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load topics");
+        if (!res.ok) throw new Error(data.error || "Failed to sync topics");
         setTopics(data.topics ?? []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load topics");
@@ -84,7 +84,7 @@ export function DashboardClient({ user }: Props) {
             Loading topics…
           </div>
         ) : (
-          <TopicList topics={topics} onChange={setTopics} enableLongPressSelection={true} />
+          <TopicList topics={topics} onChange={setTopics} />
         )}
       </div>
     </AppLayout>

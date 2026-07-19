@@ -32,11 +32,6 @@ type Props = {
   busy?: boolean;
   onStatusChange: (status: TopicStatus) => void;
   onToggleHidden: () => void;
-  // selection props
-  selectable?: boolean;
-  selected?: boolean;
-  onSelectToggle?: () => void;
-  enableLongPressSelection?: boolean;
 };
 
 export function TopicRow({
@@ -44,10 +39,6 @@ export function TopicRow({
   busy,
   onStatusChange,
   onToggleHidden,
-  selectable,
-  selected,
-  onSelectToggle,
-  enableLongPressSelection = false,
 }: Props) {
   const {
     attributes,
@@ -65,55 +56,12 @@ export function TopicRow({
 
   const name = topicDisplayName(topic);
   const status = topicStatusFromItem(topic);
-  const longPressEnabled = enableLongPressSelection;
 
-  const longPressTimerRef = useRef<number | null>(null);
-  const longPressTriggeredRef = useRef<boolean>(false);
-
-  function startLongPress() {
-    if (longPressEnabled && !selectable && onSelectToggle) {
-      longPressTriggeredRef.current = false;
-      longPressTimerRef.current = window.setTimeout(() => {
-        longPressTriggeredRef.current = true;
-        onSelectToggle?.();
-      }, 400) as unknown as number;
-    }
-  }
-
-  function clearLongPress() {
-    if (typeof longPressTimerRef.current === "number") {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  }
-
-  const longPressHandlers = longPressEnabled
-    ? {
-        onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
-          if (e.pointerType === "mouse" && e.button !== 0) return; // Only left click for mouse
-          startLongPress();
-        },
-        onPointerUp: () => clearLongPress(),
-        onPointerLeave: () => clearLongPress(),
-        onPointerCancel: () => clearLongPress(),
-        onContextMenu: (e: React.MouseEvent<HTMLElement>) => {
-          e.preventDefault();
-          if (!selectable && onSelectToggle) {
-            longPressTriggeredRef.current = true;
-            onSelectToggle?.();
-            clearLongPress();
-          }
-        },
-      }
-    : {};
 
   return (
     <li
       ref={setNodeRef}
-      style={{
-        ...style,
-        touchAction: longPressEnabled ? "manipulation" : undefined,
-      }}
+      style={style}
       className={cn(
         "group flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-2 shadow-sm sm:px-3 sm:py-3 dark:border-zinc-800 dark:bg-zinc-950",
         isDragging && "z-10 shadow-lg ring-2 ring-indigo-200 dark:ring-indigo-900",
@@ -123,7 +71,6 @@ export function TopicRow({
         topic.isArchived && "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-900/20",
         busy && "opacity-70",
       )}
-      {...longPressHandlers}
     >
       <button
         type="button"
@@ -137,45 +84,11 @@ export function TopicRow({
 
       <TopicStatusSelect value={status} busy={busy} onChange={onStatusChange} />
 
-      {/* selection checkbox for selection mode */}
-      {selectable && (
-        <button
-          type="button"
-          onClick={onSelectToggle}
-          aria-pressed={selected}
-          className={cn(
-            "mr-1 shrink-0 rounded p-1 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
-            selected ? "bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white" : "bg-white dark:bg-zinc-950"
-          )}
-        >
-          {selected ? "✓" : "○"}
-        </button>
-      )}
+
 
       <div className="min-w-0 flex-1 flex flex-col">
-        {selectable ? (
-          <button
-            type="button"
-            onClick={onSelectToggle}
-            className={cn(
-              "truncate text-left text-sm font-medium text-zinc-900 hover:text-indigo-700 dark:text-zinc-100 dark:hover:text-indigo-400",
-              topic.isCompleted && "text-zinc-500 line-through dark:text-zinc-500",
-              topic.isInProgress && !topic.isCompleted && "text-sky-900 dark:text-sky-300",
-              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900 dark:text-emerald-300",
-            )}
-          >
-            {name}
-          </button>
-        ) : (
           <TransitionLink
             href={`/topics/${topic.id}`}
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-              if (longPressTriggeredRef.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                longPressTriggeredRef.current = false;
-              }
-            }}
             className={cn(
               "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700 dark:text-zinc-100 dark:hover:text-indigo-400",
               topic.isCompleted && "text-zinc-500 line-through dark:text-zinc-500",
@@ -185,7 +98,6 @@ export function TopicRow({
           >
             {name}
           </TransitionLink>
-        )}
         {topic.updatedAt && (
           <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Updated {formatRelativeTime(topic.updatedAt)}</span>
         )}

@@ -139,8 +139,8 @@ export function TopicStatusSelect({ value, busy, onChange }: Props) {
                   onClick={() => handleSelect(option.value)}
                   className={cn(
                     "flex w-full min-h-11 items-center gap-2 px-3 py-2.5 text-left text-sm transition sm:min-h-9 sm:py-2",
-                    "hover:bg-zinc-50 active:bg-zinc-100",
-                    selected && "bg-zinc-50 font-medium",
+                    "hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-900 dark:active:bg-zinc-800",
+                    selected && "bg-zinc-50 font-medium dark:bg-zinc-900/50",
                     option.optionClassName,
                   )}
                 >

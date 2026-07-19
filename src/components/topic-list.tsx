@@ -97,19 +97,16 @@ function TopicFilterSelect({
 type Props = {
   topics: TopicItem[];
   onChange: (topics: TopicItem[]) => void;
-  enableLongPressSelection?: boolean;
 };
 
-export function TopicList({ topics, onChange, enableLongPressSelection = false }: Props) {
+export function TopicList({ topics, onChange }: Props) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const selectionMode = selectedIds.size > 0;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -236,46 +233,7 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
     }
   }
 
-  function toggleSelect(id: string) {
-    setSelectedIds((s) => {
-      const next = new Set(s);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
-  function selectAll() {
-    setSelectedIds(new Set(visible.map((t) => t.id)));
-  }
-
-  function clearSelection() {
-    setSelectedIds(new Set());
-  }
-
-  async function bulkAction(action: "delete" | "createFolder") {
-    if (selectedIds.size === 0) return;
-    setError(null);
-    try {
-      const res = await fetch(`/api/topics/bulk`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ids: Array.from(selectedIds) }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Bulk action failed");
-      // refresh topics
-      const getRes = await fetch(`/api/topics`);
-      const getData = await getRes.json();
-      if (getRes.ok && getData.topics) {
-        onChange(getData.topics);
-      }
-      clearSelection();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Bulk action failed");
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -291,7 +249,7 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
             <p className="mt-0.5 text-xs font-semibold text-zinc-400 uppercase tracking-wide">
               Topics Completed
             </p>
-            <div className="mt-3.5 h-2 w-full max-w-[160px] overflow-hidden rounded-full bg-zinc-100 sm:max-w-xs">
+            <div className="mt-3.5 h-2 w-full max-w-[160px] overflow-hidden rounded-full bg-zinc-100 sm:max-w-xs dark:bg-zinc-800">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-700 ease-out"
                 style={{ width: `${Math.round((completedCount / (activeCount || 1)) * 100)}%` }}
@@ -434,34 +392,7 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
         </div>
       ) : (
         <>
-          {selectionMode && (
-            <div className="mb-3 flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{selectedIds.size} selected</span>
-                <button type="button" onClick={selectAll} className="text-xs text-zinc-700 hover:underline dark:text-zinc-400">Select all</button>
-                <button type="button" onClick={clearSelection} className="text-xs text-zinc-700 hover:underline dark:text-zinc-400">Clear</button>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!confirm(`Delete ${selectedIds.size} selected topics? This cannot be undone.`)) return;
-                    await bulkAction("delete");
-                  }}
-                  className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700"
-                >
-                  Delete
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => await bulkAction("createFolder")}
-                  className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
-                >
-                  Add folder to Drive
-                </button>
-              </div>
-            </div>
-          )}
+
 
           <DndContext
             sensors={sensors}
@@ -484,11 +415,6 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
                     onToggleHidden={() =>
                       patchTopic(topic.id, { isHidden: !topic.isHidden })
                     }
-                    // selection props
-                    selectable={selectionMode}
-                    selected={selectedIds.has(topic.id)}
-                    onSelectToggle={() => toggleSelect(topic.id)}
-                    enableLongPressSelection={enableLongPressSelection}
                   />
                 ))}
               </ul>
