@@ -767,7 +767,7 @@ function SortablePromptRow({
             <GripVertical className="h-4 w-4" />
           </button>
           
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 break-words whitespace-normal">
             {item.title}
           </h3>
         </div>
