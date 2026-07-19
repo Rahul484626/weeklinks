@@ -832,12 +832,8 @@ function SortablePromptRow({
 
       {/* Accordion Content */}
       {isExpanded && (
-        <div className="border-t border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/10">
-          <pre className="whitespace-pre-wrap font-mono text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl dark:bg-zinc-900/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 select-text overflow-x-auto shadow-inner leading-relaxed">
-            {item.content}
-          </pre>
-          
-          <div className="mt-3 flex justify-end">
+        <div className="border-t border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/10 flex flex-col gap-3">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => handleCopyPrompt(item.id, item.content)}
@@ -852,6 +848,10 @@ function SortablePromptRow({
               <span>{isCopied ? "Copied Prompt" : "Copy Prompt Content"}</span>
             </button>
           </div>
+
+          <pre className="whitespace-pre-wrap font-mono text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl dark:bg-zinc-900/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 select-text overflow-x-auto shadow-inner leading-relaxed">
+            {item.content}
+          </pre>
         </div>
       )}
     </div>
