@@ -26,11 +26,11 @@ export function ThemeProvider({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const savedTheme = localStorage.getItem(storageKey) as Theme | null;
     if (savedTheme) {
       setThemeState(savedTheme);
     }
+    setMounted(true);
   }, [storageKey]);
 
   useEffect(() => {

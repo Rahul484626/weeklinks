@@ -34,7 +34,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                let theme = localStorage.getItem('theme') || 'system';
+                let theme = localStorage.getItem('theme') || 'light';
                 if (theme === 'system') {
                   theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                 }

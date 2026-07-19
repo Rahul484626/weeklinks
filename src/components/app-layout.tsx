@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import { Menu, X, LayoutDashboard, Folder, LogOut, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import icon from "@/app/icon.png";
+import Image from "next/image";
 import { ThemeToggle } from "./theme-toggle";
 
 type Props = {
@@ -42,7 +43,7 @@ export function AppLayout({ children, user, onSync, syncing }: Props) {
         {/* Brand logo */}
         <div className="flex items-center justify-between">
           <TransitionLink href="/dashboard" className="flex items-center gap-2">
-            <img src={icon.src} alt="Logo" className="h-7 w-7 shrink-0 rounded-md object-contain" />
+            <Image src={icon} alt="Logo" className="h-7 w-7 shrink-0 rounded-md object-contain" />
             <div className="flex flex-col">
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
                 Weeklinks
@@ -167,7 +168,7 @@ export function AppLayout({ children, user, onSync, syncing }: Props) {
               <Menu className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-1.5">
-              <img src={icon.src} alt="Logo" className="h-6 w-6 shrink-0 rounded-md object-contain lg:hidden" />
+              <Image src={icon} alt="Logo" className="h-6 w-6 shrink-0 rounded-md object-contain lg:hidden" />
               <div className="flex flex-col lg:hidden">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-600 leading-none dark:text-indigo-400">
                   Weeklinks
