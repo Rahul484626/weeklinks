@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { usePageTransition, TransitionLink } from "./providers";
 import { signOut } from "next-auth/react";
-import { Menu, X, LayoutDashboard, Folder, LogOut, RefreshCw } from "lucide-react";
+import { Menu, X, LayoutDashboard, Folder, LogOut, RefreshCw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import icon from "@/app/icon.png";
 import Image from "next/image";
@@ -35,6 +35,7 @@ export function AppLayout({ children, user, onSync, syncing }: Props) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Topics", href: "/topics", icon: Folder },
+    { name: "Global prompts", href: "/global-prompts", icon: Sparkles },
   ];
 
   const sidebarContent = (
