@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/session";
-import { updateGlobalPrompt, deleteGlobalPrompt } from "@/lib/prompts";
+import { updateGlobalPrompt, deleteGlobalPrompt, reorderGlobalPrompts } from "@/lib/prompts";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -12,8 +12,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   try {
     const { id } = await params;
-    const { title, content } = await request.json();
+    const body = await request.json();
 
+    // Handle bulk reordering
+    if (Array.isArray(body.orderedIds)) {
+      const prompts = await reorderGlobalPrompts(session!.user.id, body.orderedIds);
+      return NextResponse.json({ prompts });
+    }
+
+    // Handle individual item update
+    const { title, content } = body;
     if (typeof title !== "string" || !title.trim()) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }

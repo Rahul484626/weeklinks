@@ -1,7 +1,36 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Copy, Check, Pencil, Trash2, ChevronDown, Search, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Copy,
+  Check,
+  Pencil,
+  Trash2,
+  ChevronDown,
+  Search,
+  Sparkles,
+  Loader2,
+  AlertCircle,
+  GripVertical
+} from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { AppLayout } from "@/components/app-layout";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +38,7 @@ type PromptItem = {
   id: string;
   title: string;
   content: string;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -58,6 +88,14 @@ export function GlobalPromptsClient({ user }: Props) {
 
   // Copy success state
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // DnD Sensors config
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Fetch prompts on mount
   useEffect(() => {
@@ -157,7 +195,7 @@ export function GlobalPromptsClient({ user }: Props) {
         throw new Error(data.error || "Failed to create prompt");
       }
 
-      setPrompts([data.prompt, ...prompts]);
+      setPrompts([...prompts, data.prompt]); // Add to the end (since it has higher sortOrder)
       setAddModalOpen(false);
       setPromptTitle("");
       setPromptContent("");
@@ -225,6 +263,41 @@ export function GlobalPromptsClient({ user }: Props) {
     }
   };
 
+  // Drag reorder handler
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = prompts.findIndex((p) => p.id === active.id);
+    const newIndex = prompts.findIndex((p) => p.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reordered = arrayMove(prompts, oldIndex, newIndex);
+    // Instant state update for tactile feedback
+    setPrompts(reordered);
+
+    try {
+      const res = await fetch(`/api/prompts/${active.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: reordered.map((p) => p.id) }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save order");
+      }
+
+      const data = await res.json();
+      if (data.prompts) {
+        setPrompts(data.prompts);
+      }
+    } catch (err) {
+      console.error("Reorder saving failed", err);
+      // Fallback display error or reload
+    }
+  };
+
   // Copy content to clipboard
   const handleCopyPrompt = async (id: string, content: string) => {
     try {
@@ -263,36 +336,66 @@ export function GlobalPromptsClient({ user }: Props) {
   const isDbMissing = error && (
     error.toLowerCase().includes("relation") || 
     error.toLowerCase().includes("table") || 
+    error.toLowerCase().includes("column") ||
     error.toLowerCase().includes("does not exist")
   );
 
   return (
     <AppLayout user={user}>
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-extrabold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              Global prompts
-            </h1>
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+      <div className="mx-auto max-w-4xl px-4 py-5 sm:py-6 space-y-4">
+        {/* Title, Add Button & Search Row */}
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between sm:justify-start gap-4">
+              <h1 className="text-lg sm:text-xl font-extrabold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span>Global prompts</span>
+              </h1>
+              {/* Add Prompt Button (Mobile Only) */}
+              <button
+                type="button"
+                onClick={openAddModal}
+                disabled={!!isDbMissing}
+                className="inline-flex sm:hidden h-8.5 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-[11px] font-semibold text-white shadow-xs transition hover:bg-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-600 dark:hover:bg-indigo-500 shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add prompt</span>
+              </button>
+            </div>
+            <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 mt-1 hidden sm:block">
               Store and copy your frequently used system prompts, directives, and specifications.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={openAddModal}
-            disabled={!!isDbMissing}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-600 dark:hover:bg-indigo-500 shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Add prompt
-          </button>
-        </div>
-      </header>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            {/* Search Input */}
+            {!isDbMissing && (
+              <div className="relative flex-1 sm:w-60">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                <input
+                  type="text"
+                  placeholder="Search prompts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  disabled={!loaded}
+                  className="w-full rounded-xl border border-zinc-200 bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-zinc-800 placeholder-zinc-400 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:placeholder-zinc-500"
+                />
+              </div>
+            )}
 
-      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+            {/* Add Prompt Button (Desktop/Tablet) */}
+            <button
+              type="button"
+              onClick={openAddModal}
+              disabled={!!isDbMissing}
+              className="hidden sm:inline-flex h-8.5 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-600 dark:hover:bg-indigo-500 shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add prompt</span>
+            </button>
+          </div>
+        </div>
+
         {/* SQL Setup Migration Required Warning Banner */}
         {isDbMissing && (
           <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 dark:bg-amber-950/20 dark:border-amber-900/40">
@@ -300,10 +403,13 @@ export function GlobalPromptsClient({ user }: Props) {
               <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
-                  Database Migration Required
+                  Database Setup Required
                 </h4>
                 <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
-                  The DB table <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px] dark:bg-amber-950/60">global_prompts</code> was not found. Please open your **Supabase Dashboard SQL Editor**, copy the script from <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px] dark:bg-amber-950/60">supabase/add-global-prompts.sql</code>, and click **Run** to set up the storage table.
+                  The DB table or the required <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px] dark:bg-amber-950/60">sort_order</code> column is missing. Please open your **Supabase Dashboard SQL Editor**:
+                  <br />
+                  <span className="block mt-1">• **First Setup**: Copy and run the query script from <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px] dark:bg-amber-950/60">supabase/add-global-prompts.sql</code>.</span>
+                  <span className="block mt-1">• **Update existing table**: Run <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px] dark:bg-amber-950/60">ALTER TABLE public.global_prompts ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;</code> to add the sort column.</span>
                 </p>
                 <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-medium">
                   Technical error: {error}
@@ -327,21 +433,6 @@ export function GlobalPromptsClient({ user }: Props) {
                 </p>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Search Bar */}
-        {!isDbMissing && (
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search prompts by title or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={!loaded}
-              className="w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 py-2.5 text-xs font-medium text-zinc-800 placeholder-zinc-400 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:placeholder-zinc-500"
-            />
           </div>
         )}
 
@@ -377,113 +468,31 @@ export function GlobalPromptsClient({ user }: Props) {
           </div>
         ) : (
           !isDbMissing && (
-            <div className="space-y-3">
-              {filteredPrompts.map((item) => {
-                const isExpanded = expandedIds.has(item.id);
-                const isCopied = copiedId === item.id;
-
-                return (
-                  <div
-                    key={item.id}
-                    className="overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 shadow-xs"
-                  >
-                    {/* Accordion Header */}
-                    <div
-                      onClick={() => toggleAccordion(item.id)}
-                      className="flex cursor-pointer items-center justify-between p-4 select-none hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0 pr-4">
-                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                          {item.title}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                        {/* Copy Action */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyPrompt(item.id, item.content);
-                          }}
-                          className={cn(
-                            "inline-flex items-center justify-center rounded-lg p-1.5 transition border cursor-pointer",
-                            isCopied
-                              ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50"
-                              : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900 border-transparent"
-                          )}
-                          title="Copy prompt text"
-                        >
-                          {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                          {isCopied && <span className="text-[10px] font-bold ml-1 hidden sm:inline">Copied!</span>}
-                        </button>
-
-                        {/* Edit Action */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(item);
-                          }}
-                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer dark:hover:bg-zinc-900 dark:hover:text-zinc-300 border border-transparent"
-                          title="Edit prompt"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-
-                        {/* Delete Action */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteModalOpen(item);
-                          }}
-                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-red-600 transition cursor-pointer dark:hover:bg-zinc-900 dark:hover:text-red-400 border border-transparent"
-                          title="Delete prompt"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-
-                        <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
-
-                        {/* Accordion Chevron */}
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 text-zinc-400 transition-transform duration-200",
-                            isExpanded && "transform rotate-180 text-indigo-600 dark:text-indigo-400"
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Accordion Content */}
-                    {isExpanded && (
-                      <div className="border-t border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/10">
-                        <pre className="whitespace-pre-wrap font-mono text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl dark:bg-zinc-900/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 select-text overflow-x-auto shadow-inner leading-relaxed">
-                          {item.content}
-                        </pre>
-                        
-                        <div className="mt-3 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleCopyPrompt(item.id, item.content)}
-                            className={cn(
-                              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition border cursor-pointer",
-                              isCopied
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50"
-                                : "bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-300 dark:border-zinc-800 dark:hover:bg-zinc-900"
-                            )}
-                          >
-                            {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                            <span>{isCopied ? "Copied Prompt" : "Copy Prompt Content"}</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filteredPrompts.map((p) => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {filteredPrompts.map((item) => (
+                    <SortablePromptRow
+                      key={item.id}
+                      item={item}
+                      isExpanded={expandedIds.has(item.id)}
+                      isCopied={copiedId === item.id}
+                      toggleAccordion={toggleAccordion}
+                      handleCopyPrompt={handleCopyPrompt}
+                      openEditModal={openEditModal}
+                      setDeleteModalOpen={setDeleteModalOpen}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )
         )}
       </div>
@@ -697,5 +706,154 @@ export function GlobalPromptsClient({ user }: Props) {
         </div>
       )}
     </AppLayout>
+  );
+}
+
+function SortablePromptRow({
+  item,
+  isExpanded,
+  isCopied,
+  toggleAccordion,
+  handleCopyPrompt,
+  openEditModal,
+  setDeleteModalOpen,
+}: {
+  item: PromptItem;
+  isExpanded: boolean;
+  isCopied: boolean;
+  toggleAccordion: (id: string) => void;
+  handleCopyPrompt: (id: string, content: string) => void;
+  openEditModal: (item: PromptItem) => void;
+  setDeleteModalOpen: (item: PromptItem) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 shadow-xs",
+        isDragging && "z-10 shadow-lg ring-2 ring-indigo-200 dark:ring-indigo-900"
+      )}
+    >
+      {/* Accordion Header */}
+      <div
+        onClick={() => toggleAccordion(item.id)}
+        className="flex cursor-pointer items-center justify-between p-4 select-none hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors"
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0 pr-4">
+          {/* Drag Handle */}
+          <button
+            type="button"
+            className="cursor-grab touch-none rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 active:cursor-grabbing dark:hover:bg-zinc-900 dark:hover:text-zinc-300 shrink-0"
+            aria-label="Drag to reorder"
+            onClick={(e) => e.stopPropagation()} // Prevent toggling accordion when clicking drag handle
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+            {item.title}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Copy Action */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopyPrompt(item.id, item.content);
+            }}
+            className={cn(
+              "inline-flex items-center justify-center rounded-lg p-1.5 transition border cursor-pointer",
+              isCopied
+                ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50"
+                : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900 border-transparent"
+            )}
+            title="Copy prompt text"
+          >
+            {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            {isCopied && <span className="text-[10px] font-bold ml-1 hidden sm:inline">Copied!</span>}
+          </button>
+
+          {/* Edit Action */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditModal(item);
+            }}
+            className="inline-flex items-center justify-center rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer dark:hover:bg-zinc-900 dark:hover:text-zinc-300 border border-transparent"
+            title="Edit prompt"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+
+          {/* Delete Action */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteModalOpen(item);
+            }}
+            className="inline-flex items-center justify-center rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-red-600 transition cursor-pointer dark:hover:bg-zinc-900 dark:hover:text-red-400 border border-transparent"
+            title="Delete prompt"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
+
+          {/* Accordion Chevron */}
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-zinc-400 transition-transform duration-200",
+              isExpanded && "transform rotate-180 text-indigo-600 dark:text-indigo-400"
+            )}
+          />
+        </div>
+      </div>
+
+      {/* Accordion Content */}
+      {isExpanded && (
+        <div className="border-t border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/10">
+          <pre className="whitespace-pre-wrap font-mono text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl dark:bg-zinc-900/50 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 select-text overflow-x-auto shadow-inner leading-relaxed">
+            {item.content}
+          </pre>
+          
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => handleCopyPrompt(item.id, item.content)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition border cursor-pointer",
+                isCopied
+                  ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50"
+                  : "bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-300 dark:border-zinc-800 dark:hover:bg-zinc-900"
+              )}
+            >
+              {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              <span>{isCopied ? "Copied Prompt" : "Copy Prompt Content"}</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
