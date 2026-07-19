@@ -89,6 +89,7 @@ export function TopicRow({
       <div className="min-w-0 flex-1 flex flex-col">
           <TransitionLink
             href={`/topics/${topic.id}`}
+            loadingMessage={`Opening "${name}"...`}
             className={cn(
               "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700 dark:text-zinc-100 dark:hover:text-indigo-400",
               topic.isCompleted && "text-zinc-500 line-through dark:text-zinc-500",

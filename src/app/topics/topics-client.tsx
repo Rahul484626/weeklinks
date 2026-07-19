@@ -451,7 +451,7 @@ export function TopicsClient({ user }: Props) {
         {loading ? (
           <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center text-sm text-zinc-400 font-medium flex items-center justify-center gap-2 dark:border-zinc-800 dark:bg-zinc-950">
             <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
-            <span>Loading workspace…</span>
+            <span>Fetching your topics and brainstorming ideas…</span>
           </div>
         ) : filteredIdeas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center shadow-xs dark:border-zinc-800 dark:bg-zinc-950">

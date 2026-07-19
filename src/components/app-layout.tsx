@@ -24,7 +24,7 @@ type Props = {
 export function AppLayout({ children, user, onSync, syncing }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const { isPending } = usePageTransition();
+  const { isPending, loadingMessage } = usePageTransition();
 
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
@@ -241,10 +241,10 @@ export function AppLayout({ children, user, onSync, syncing }: Props) {
                 </div>
               </div>
               <p className="text-sm font-bold text-zinc-950 dark:text-zinc-50 mt-4 tracking-tight">
-                Loading workspace
+                {loadingMessage || "Preparing your workspace…"}
               </p>
               <p className="text-xs text-zinc-400 mt-1 max-w-[240px] font-medium leading-normal">
-                Preparing your topics and resources, please wait...
+                {loadingMessage ? "Just a moment..." : "Preparing your topics and resources, please wait..."}
               </p>
             </div>
           ) : (

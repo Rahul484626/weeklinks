@@ -9,7 +9,8 @@ import { Session } from "next-auth";
 
 type TransitionContextType = {
   isPending: boolean;
-  navigate: (href: string) => void;
+  loadingMessage: string | null;
+  navigate: (href: string, message?: string) => void;
 };
 
 const TransitionContext = createContext<TransitionContextType | null>(null);
@@ -23,8 +24,10 @@ export function usePageTransition() {
 export function Providers({ children, session }: { children: React.ReactNode; session: Session | null }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [loadingMessage, setLoadingMessage] = React.useState<string | null>(null);
 
-  const navigate = (href: string) => {
+  const navigate = (href: string, message?: string) => {
+    setLoadingMessage(message || null);
     startTransition(() => {
       router.push(href);
     });
@@ -32,8 +35,8 @@ export function Providers({ children, session }: { children: React.ReactNode; se
 
   return (
     <ThemeProvider defaultTheme="light">
-      <SessionProvider session={session}  >
-        <TransitionContext.Provider value={{ isPending, navigate }}>
+      <SessionProvider session={session}>
+        <TransitionContext.Provider value={{ isPending, loadingMessage, navigate }}>
           {children}
         </TransitionContext.Provider>
       </SessionProvider>
@@ -44,10 +47,11 @@ export function Providers({ children, session }: { children: React.ReactNode; se
 interface TransitionLinkProps extends LinkProps {
   children: React.ReactNode;
   className?: string;
+  loadingMessage?: string;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export function TransitionLink({ children, href, className, onClick, ...props }: TransitionLinkProps) {
+export function TransitionLink({ children, href, className, loadingMessage, onClick, ...props }: TransitionLinkProps) {
   const { navigate } = usePageTransition();
 
   return (
@@ -58,7 +62,7 @@ export function TransitionLink({ children, href, className, onClick, ...props }:
         if (onClick) onClick(e);
         if (!e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
           e.preventDefault();
-          navigate(href.toString());
+          navigate(href.toString(), loadingMessage);
         }
       }}
       {...props}

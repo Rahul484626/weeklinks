@@ -81,7 +81,7 @@ export function DashboardClient({ user }: Props) {
 
         {loading ? (
           <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-12 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-            Loading topics…
+            Fetching your dashboard topics…
           </div>
         ) : (
           <TopicList topics={topics} onChange={setTopics} />

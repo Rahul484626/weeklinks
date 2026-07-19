@@ -340,7 +340,7 @@ export function FileManager({ topicId }: Props) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {loading ? "Loading files…" : `${files.length} file${files.length === 1 ? "" : "s"}`}
+          {loading ? "Fetching files from Google Drive…" : `${files.length} file${files.length === 1 ? "" : "s"}`}
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -420,7 +420,7 @@ export function FileManager({ topicId }: Props) {
       ) : loading ? (
         <div className="flex items-center justify-center rounded-2xl border border-zinc-200 bg-white py-16 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Loading Drive files…
+          Fetching folder contents…
         </div>
       ) : files.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-950">
