@@ -28,7 +28,7 @@ export default async function TopicPage({ params }: Props) {
 
   return (
     <AppLayout user={session.user}>
-      <header className="border-b border-zinc-200 bg-white">
+      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <TransitionLink
@@ -38,7 +38,7 @@ export default async function TopicPage({ params }: Props) {
               <ArrowLeft className="h-4 w-4" />
               Back to topics
             </TransitionLink>
-            <h1 className="mt-2 text-xl font-semibold text-zinc-900">{name}</h1>
+            <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50">{name}</h1>
           </div>
           {topic.isArchived && (
             <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">

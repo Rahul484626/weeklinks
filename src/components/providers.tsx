@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "next-themes";
 import Link, { LinkProps } from "next/link";
 import { Session } from "next-auth";
 
@@ -30,11 +31,13 @@ export function Providers({ children, session }: { children: React.ReactNode; se
   };
 
   return (
-    <SessionProvider session={session}>
-      <TransitionContext.Provider value={{ isPending, navigate }}>
-        {children}
-      </TransitionContext.Provider>
-    </SessionProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} themes={["light", "dark", "night-light"]}>
+      <SessionProvider session={session}  >
+        <TransitionContext.Provider value={{ isPending, navigate }}>
+          {children}
+        </TransitionContext.Provider>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }
 

@@ -4,7 +4,80 @@ import React, { useEffect, useState, useRef } from "react";
 import { Plus, Pencil, Trash2, Calendar, Loader2, FolderPlus, Search } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { TopicIdea } from "@/lib/ideas";
+import { ChevronDown, Filter } from "lucide-react";
+
+type FilterType = "all" | "created" | "pending";
+
+const FILTER_OPTIONS = [
+  { value: "all", label: "All topics" },
+  { value: "created", label: "Folders created in drive" },
+  { value: "pending", label: "Topics added in list" },
+] as const;
+
+function TopicsFilterSelect({
+  value,
+  onChange,
+}: {
+  value: FilterType;
+  onChange: (val: FilterType) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleDown(e: MouseEvent | TouchEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("touchstart", handleDown);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("touchstart", handleDown);
+    };
+  }, [open]);
+
+  const current = FILTER_OPTIONS.find((o) => o.value === value) || FILTER_OPTIONS[0];
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex h-9 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 hover:border-zinc-300 cursor-pointer dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
+      >
+        <Filter className="h-3.5 w-3.5 text-zinc-400" />
+        <span className="hidden sm:inline">Filter: {current.label}</span>
+        <span className="sm:hidden">{current.label}</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 text-zinc-400 transition", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <ul className="absolute right-0 top-[calc(100%+0.25rem)] z-20 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+          {FILTER_OPTIONS.map((option) => (
+            <li key={option.value}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center px-3 py-2.5 text-left text-xs font-medium transition hover:bg-zinc-50 cursor-pointer dark:hover:bg-zinc-900",
+                  option.value === value ? "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-900/30 dark:text-indigo-400" : "text-zinc-700 dark:text-zinc-300"
+                )}
+              >
+                {option.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 type Props = {
   user: {
@@ -207,10 +280,10 @@ export function TopicsClient({ user }: Props) {
       <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
         {/* Folder Count Pill (Above Topic list header) */}
         {topicsCount !== null && (
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-500 bg-white border border-zinc-200/80 rounded-xl px-3 py-1.5 shadow-xs">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-500 bg-white border border-zinc-200/80 rounded-xl px-3 py-1.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
             <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
             <span>Total Folders in Drive:</span>
-            <span className="font-extrabold text-zinc-950">{topicsCount}</span>
+            <span className="font-extrabold text-zinc-950 dark:text-zinc-50">{topicsCount}</span>
           </div>
         )}
 
@@ -218,7 +291,7 @@ export function TopicsClient({ user }: Props) {
         <div>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-zinc-950 truncate">
+              <h1 className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-zinc-50 truncate">
                 Topics List
               </h1>
               <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
@@ -255,23 +328,18 @@ export function TopicsClient({ user }: Props) {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full rounded-lg border border-zinc-200 bg-white py-1.5 pl-8 pr-3 text-xs font-medium text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-lg border border-zinc-200 bg-white py-1.5 pl-8 pr-3 text-xs font-medium text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
               />
             </div>
 
             {/* Status Select */}
-            <select
+            <TopicsFilterSelect
               value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value as "all" | "created" | "pending");
+              onChange={(val) => {
+                setFilterStatus(val);
                 setCurrentPage(1);
               }}
-              className="px-2.5 py-1.5 border border-zinc-200 bg-white rounded-lg text-xs font-semibold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="all">All topics</option>
-              <option value="created">Folders created in drive</option>
-              <option value="pending">Topics added in list</option>
-            </select>
+            />
           </div>
         </div>
 
@@ -283,13 +351,13 @@ export function TopicsClient({ user }: Props) {
 
         {/* Content list */}
         {loading ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center text-sm text-zinc-400 font-medium flex items-center justify-center gap-2">
+          <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center text-sm text-zinc-400 font-medium flex items-center justify-center gap-2 dark:border-zinc-800 dark:bg-zinc-950">
             <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
             <span>Loading workspace…</span>
           </div>
         ) : filteredIdeas.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center shadow-xs">
-            <p className="font-semibold text-zinc-900">No topics found</p>
+          <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+            <p className="font-semibold text-zinc-900 dark:text-zinc-100">No topics found</p>
             <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
               Try adjusting your search query or filter status, or click the button above to add a new topic idea.
             </p>
@@ -300,10 +368,10 @@ export function TopicsClient({ user }: Props) {
               {paginatedIdeas.map((idea) => (
                 <div
                   key={idea.id}
-                  className="group relative rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs transition hover:shadow-sm hover:border-zinc-300 flex flex-col justify-between gap-4"
+                  className="group relative rounded-2xl border border-zinc-200 bg-white p-3 sm:p-4 shadow-xs transition hover:shadow-sm hover:border-zinc-300 flex flex-col justify-between gap-2 sm:gap-4 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
                 >
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-950 break-words pr-12">
+                    <h3 className="text-xs sm:text-sm font-bold text-zinc-950 dark:text-zinc-50 break-words pr-12 dark:text-zinc-50">
                       {idea.title}
                     </h3>
                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium mt-1">
@@ -312,7 +380,7 @@ export function TopicsClient({ user }: Props) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center justify-between w-full mt-1 sm:mt-0">
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -320,7 +388,7 @@ export function TopicsClient({ user }: Props) {
                           setRenameModalOpen({ id: idea.id, title: idea.title });
                           setRenameTitle(idea.title);
                         }}
-                        className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer"
+                        className="inline-flex items-center justify-center rounded-lg p-1.5 sm:p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition cursor-pointer dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
                         title="Rename"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -328,7 +396,7 @@ export function TopicsClient({ user }: Props) {
                       <button
                         type="button"
                         onClick={() => setDeleteModalOpen({ id: idea.id, title: idea.title })}
-                        className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-600 transition cursor-pointer"
+                        className="inline-flex items-center justify-center rounded-lg p-1.5 sm:p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-600 transition cursor-pointer dark:hover:bg-zinc-900"
                         title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -336,15 +404,15 @@ export function TopicsClient({ user }: Props) {
                     </div>
 
                     {idea.driveFolderId ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-emerald-600 bg-emerald-50">
-                        <FolderPlus className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="inline-flex items-center gap-1 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400">
+                        <FolderPlus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                         <span>Folder created in drive</span>
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setConvertModalOpen({ id: idea.id, title: idea.title })}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition cursor-pointer dark:text-indigo-400 dark:hover:bg-indigo-950/50"
                         title="Create Folder in Drive"
                       >
                         <FolderPlus className="h-3.5 w-3.5" />
@@ -360,29 +428,30 @@ export function TopicsClient({ user }: Props) {
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-zinc-200 pt-4">
                 <div className="text-xs text-zinc-500 font-medium">
-                  Showing <span className="font-semibold text-zinc-900">{startIndex + 1}</span> to{" "}
-                  <span className="font-semibold text-zinc-900">
+                  Showing <span className="font-semibold text-zinc-900 dark:text-zinc-100">{startIndex + 1}</span> to{" "}
+                  Showing <span className="font-semibold text-zinc-900 dark:text-zinc-100">{startIndex + 1}</span> to{" "}
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                     {Math.min(startIndex + itemsPerPage, filteredIdeas.length)}
                   </span>{" "}
-                  of <span className="font-semibold text-zinc-900">{filteredIdeas.length}</span> ideas
+                  of <span className="font-semibold text-zinc-900 dark:text-zinc-100">{filteredIdeas.length}</span> ideas
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1.5 border border-zinc-200 bg-white rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                    className="px-3 py-1.5 border border-zinc-200 bg-white rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
                   >
                     Previous
                   </button>
-                  <span className="text-xs font-semibold text-zinc-700 px-1">
+                  <span className="text-xs font-semibold text-zinc-700 px-1 dark:text-zinc-300">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 border border-zinc-200 bg-white rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                    className="px-3 py-1.5 border border-zinc-200 bg-white rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
                   >
                     Next
                   </button>
@@ -399,9 +468,9 @@ export function TopicsClient({ user }: Props) {
               className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
               onClick={() => setAddModalOpen(false)}
             />
-            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50">
+            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50 dark:border-zinc-800 dark:bg-zinc-950">
               <div>
-                <h3 className="text-base font-bold text-zinc-950">Add Topic Idea</h3>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Add Topic Idea</h3>
                 <p className="text-xs font-medium text-zinc-500 mt-1">
                   Enter a brainstorming concept or title for this topic.
                 </p>
@@ -413,7 +482,7 @@ export function TopicsClient({ user }: Props) {
                 onChange={(e) => setNewTitle(e.target.value)}
                 disabled={actionBusy}
                 rows={3}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
               />
 
               <div className="flex items-center justify-end gap-2.5">
@@ -424,7 +493,7 @@ export function TopicsClient({ user }: Props) {
                     setAddModalOpen(false);
                     setNewTitle("");
                   }}
-                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>
@@ -448,9 +517,9 @@ export function TopicsClient({ user }: Props) {
               className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
               onClick={() => setRenameModalOpen(null)}
             />
-            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50">
+            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50 dark:border-zinc-800 dark:bg-zinc-950">
               <div>
-                <h3 className="text-base font-bold text-zinc-950">Rename Topic Idea</h3>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Rename Topic Idea</h3>
                 <p className="text-xs font-medium text-zinc-500 mt-1">
                   Enter the new title for this topic.
                 </p>
@@ -462,7 +531,7 @@ export function TopicsClient({ user }: Props) {
                 onChange={(e) => setRenameTitle(e.target.value)}
                 disabled={actionBusy}
                 rows={3}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
               />
 
               <div className="flex items-center justify-end gap-2.5">
@@ -470,7 +539,7 @@ export function TopicsClient({ user }: Props) {
                   type="button"
                   disabled={actionBusy}
                   onClick={() => setRenameModalOpen(null)}
-                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>
@@ -494,11 +563,11 @@ export function TopicsClient({ user }: Props) {
               className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
               onClick={() => setDeleteModalOpen(null)}
             />
-            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50">
+            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50 dark:border-zinc-800 dark:bg-zinc-950">
               <div>
-                <h3 className="text-base font-bold text-zinc-950">Delete Topic Idea</h3>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Delete Topic Idea</h3>
                 <p className="text-xs font-medium text-zinc-500 mt-1">
-                  Are you sure you want to delete <span className="font-semibold text-zinc-900">&quot;{deleteModalOpen.title}&quot;</span>? This action is permanent.
+                  Are you sure you want to delete <span className="font-semibold text-zinc-900 dark:text-zinc-100">&quot;{deleteModalOpen.title}&quot;</span>? This action is permanent.
                 </p>
               </div>
 
@@ -507,7 +576,7 @@ export function TopicsClient({ user }: Props) {
                   type="button"
                   disabled={actionBusy}
                   onClick={() => setDeleteModalOpen(null)}
-                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>
@@ -530,11 +599,11 @@ export function TopicsClient({ user }: Props) {
               className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
               onClick={() => setConvertModalOpen(null)}
             />
-            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50">
+            <div className="relative bg-white rounded-2xl border border-zinc-200 p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 z-50 dark:border-zinc-800 dark:bg-zinc-950">
               <div>
-                <h3 className="text-base font-bold text-zinc-950">Create Drive Folder</h3>
+                <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Create Drive Folder</h3>
                 <p className="text-xs font-medium text-zinc-500 mt-1">
-                  This will create a new folder named <span className="font-semibold text-zinc-900">&quot;{convertModalOpen.title}&quot;</span> inside your root topics directory in Google Drive. Confirm?
+                  This will create a new folder named <span className="font-semibold text-zinc-900 dark:text-zinc-100">&quot;{convertModalOpen.title}&quot;</span> inside your root topics directory in Google Drive. Confirm?
                 </p>
               </div>
 
@@ -543,7 +612,7 @@ export function TopicsClient({ user }: Props) {
                   type="button"
                   disabled={actionBusy}
                   onClick={() => setConvertModalOpen(null)}
-                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition cursor-pointer disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   Cancel
                 </button>

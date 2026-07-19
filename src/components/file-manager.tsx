@@ -311,7 +311,7 @@ export function FileManager({ topicId }: Props) {
       )}
 
       {/* Breadcrumbs Navigation */}
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 bg-white px-3 py-2 rounded-xl border border-zinc-200 shadow-xs max-w-full overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 bg-white px-3 py-2 rounded-xl border border-zinc-200 shadow-xs max-w-full overflow-x-auto scrollbar-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
         <button
           type="button"
           onClick={() => handleBreadcrumbClick(-1, null)}
@@ -328,8 +328,8 @@ export function FileManager({ topicId }: Props) {
               className={cn(
                 "hover:underline transition cursor-pointer max-w-[120px] truncate",
                 idx === folderHistory.length - 1
-                  ? "text-zinc-800 font-bold pointer-events-none cursor-default"
-                  : "text-indigo-600 hover:text-indigo-805"
+                  ? "text-zinc-800 font-bold pointer-events-none cursor-default dark:text-zinc-200"
+                  : "text-indigo-600 hover:text-indigo-805 dark:text-indigo-400 dark:hover:text-indigo-300"
               )}
             >
               {item.name}
@@ -339,7 +339,7 @@ export function FileManager({ topicId }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {loading ? "Loading files…" : `${files.length} file${files.length === 1 ? "" : "s"}`}
         </p>
         <div className="flex items-center gap-2">
@@ -347,7 +347,7 @@ export function FileManager({ topicId }: Props) {
             type="button"
             onClick={() => void loadFiles()}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -382,17 +382,17 @@ export function FileManager({ topicId }: Props) {
       )}
 
       {editing ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-indigo-600" />
-              <h3 className="font-medium text-zinc-900">{editing.name}</h3>
+              <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{editing.name}</h3>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 disabled={saving}
               >
                 Cancel
@@ -413,26 +413,26 @@ export function FileManager({ topicId }: Props) {
             onChange={(e) =>
               setEditing({ ...editing, content: e.target.value })
             }
-            className="h-[420px] w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-sm text-zinc-900 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            className="h-[420px] w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-sm text-zinc-900 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:focus:ring-indigo-900"
             spellCheck={false}
           />
         </div>
       ) : loading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-zinc-200 bg-white py-16 text-sm text-zinc-500">
+        <div className="flex items-center justify-center rounded-2xl border border-zinc-200 bg-white py-16 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading Drive files…
         </div>
       ) : files.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center">
-          <p className="font-medium text-zinc-900">This folder is empty</p>
-          <p className="mt-1 text-sm text-zinc-500">
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">This folder is empty</p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Upload scripts or videos to get started.
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-zinc-100 text-sm">
-            <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <table className="min-w-full divide-y divide-zinc-100 text-sm dark:divide-zinc-800/50">
+            <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="hidden px-4 py-3 sm:table-cell">Modified</th>
@@ -440,13 +440,13 @@ export function FileManager({ topicId }: Props) {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
               {files.map((file) => {
                 const isFolder = file.mimeType === "application/vnd.google-apps.folder";
                 const editable = isPlainTextFile(file.name, file.mimeType);
                 return (
-                  <tr key={file.id} className="hover:bg-zinc-50/80">
-                    <td className="max-w-[220px] truncate px-4 py-3 font-medium text-zinc-900 sm:max-w-none">
+                  <tr key={file.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50">
+                    <td className="max-w-[220px] truncate px-4 py-3 font-medium text-zinc-900 sm:max-w-none dark:text-zinc-200">
                       <div className="flex items-center gap-2">
                         {isFolder ? (
                           <Folder className="h-4 w-4 text-amber-500 shrink-0" />

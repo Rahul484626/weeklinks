@@ -89,10 +89,13 @@ export function TopicRow({
 
   const longPressHandlers = longPressEnabled
     ? {
-        onTouchStart: () => startLongPress(),
-        onTouchEnd: () => clearLongPress(),
-        onTouchMove: () => clearLongPress(),
-        onTouchCancel: () => clearLongPress(),
+        onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return; // Only left click for mouse
+          startLongPress();
+        },
+        onPointerUp: () => clearLongPress(),
+        onPointerLeave: () => clearLongPress(),
+        onPointerCancel: () => clearLongPress(),
         onContextMenu: (e: React.MouseEvent<HTMLElement>) => {
           e.preventDefault();
           if (!selectable && onSelectToggle) {
@@ -112,19 +115,19 @@ export function TopicRow({
         touchAction: longPressEnabled ? "manipulation" : undefined,
       }}
       className={cn(
-        "group flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-2 shadow-sm sm:px-3 sm:py-3",
-        isDragging && "z-10 shadow-lg ring-2 ring-indigo-200",
-        topic.isCompleted && "border-zinc-300 bg-zinc-50",
-        topic.isInProgress && "border-sky-200 bg-sky-50/60",
-        topic.isReadyToPickup && "border-emerald-200 bg-emerald-50/60",
-        topic.isArchived && "border-amber-200 bg-amber-50/50",
+        "group flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-2 shadow-sm sm:px-3 sm:py-3 dark:border-zinc-800 dark:bg-zinc-950",
+        isDragging && "z-10 shadow-lg ring-2 ring-indigo-200 dark:ring-indigo-900",
+        topic.isCompleted && "border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/50",
+        topic.isInProgress && "border-sky-200 bg-sky-50/60 dark:border-sky-900/50 dark:bg-sky-900/20",
+        topic.isReadyToPickup && "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-900/20",
+        topic.isArchived && "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-900/20",
         busy && "opacity-70",
       )}
       {...longPressHandlers}
     >
       <button
         type="button"
-        className="cursor-grab touch-none rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 active:cursor-grabbing"
+        className="cursor-grab touch-none rounded p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 active:cursor-grabbing dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
@@ -141,8 +144,8 @@ export function TopicRow({
           onClick={onSelectToggle}
           aria-pressed={selected}
           className={cn(
-            "mr-1 shrink-0 rounded p-1 text-zinc-600 hover:bg-zinc-100",
-            selected ? "bg-indigo-600 text-white" : "bg-white"
+            "mr-1 shrink-0 rounded p-1 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900",
+            selected ? "bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white" : "bg-white dark:bg-zinc-950"
           )}
         >
           {selected ? "✓" : "○"}
@@ -155,10 +158,10 @@ export function TopicRow({
             type="button"
             onClick={onSelectToggle}
             className={cn(
-              "truncate text-left text-sm font-medium text-zinc-900 hover:text-indigo-700",
-              topic.isCompleted && "text-zinc-500 line-through",
-              topic.isInProgress && !topic.isCompleted && "text-sky-900",
-              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+              "truncate text-left text-sm font-medium text-zinc-900 hover:text-indigo-700 dark:text-zinc-100 dark:hover:text-indigo-400",
+              topic.isCompleted && "text-zinc-500 line-through dark:text-zinc-500",
+              topic.isInProgress && !topic.isCompleted && "text-sky-900 dark:text-sky-300",
+              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900 dark:text-emerald-300",
             )}
           >
             {name}
@@ -174,28 +177,28 @@ export function TopicRow({
               }
             }}
             className={cn(
-              "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700",
-              topic.isCompleted && "text-zinc-500 line-through",
-              topic.isInProgress && !topic.isCompleted && "text-sky-900",
-              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900",
+              "truncate text-sm font-medium text-zinc-900 hover:text-indigo-700 dark:text-zinc-100 dark:hover:text-indigo-400",
+              topic.isCompleted && "text-zinc-500 line-through dark:text-zinc-500",
+              topic.isInProgress && !topic.isCompleted && "text-sky-900 dark:text-sky-300",
+              topic.isReadyToPickup && !topic.isCompleted && "text-emerald-900 dark:text-emerald-300",
             )}
           >
             {name}
           </TransitionLink>
         )}
         {topic.updatedAt && (
-          <span className="text-[11px] text-zinc-400">Updated {formatRelativeTime(topic.updatedAt)}</span>
+          <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Updated {formatRelativeTime(topic.updatedAt)}</span>
         )}
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
         {topic.isArchived && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
             Missing
           </span>
         )}
         {topic.isHidden && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
             Hidden
           </span>
         )}
@@ -204,7 +207,7 @@ export function TopicRow({
           type="button"
           onClick={onToggleHidden}
           disabled={busy}
-          className="rounded-lg p-2 text-zinc-400 opacity-100 transition hover:bg-zinc-100 hover:text-zinc-700 sm:p-1.5 sm:opacity-0 sm:group-hover:opacity-100"
+          className="rounded-lg p-2 text-zinc-400 opacity-100 transition hover:bg-zinc-100 hover:text-zinc-700 sm:p-1.5 sm:opacity-0 sm:group-hover:opacity-100 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
           title={topic.isHidden ? "Unhide topic" : "Hide topic"}
           aria-label={topic.isHidden ? "Unhide topic" : "Hide topic"}
         >

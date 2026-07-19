@@ -1,8 +1,31 @@
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *, .night-light *));
+
+.night-light {
+  /* Warm amber/stone-tinted overrides for zinc to create a night light mode */
+  --background: #1b1713;
+  --foreground: #fdfcfb;
+  --color-zinc-950: #1b1713;
+  --color-zinc-900: #29241f;
+  --color-zinc-800: #423b33;
+  --color-zinc-700: #5c5248;
+  --color-zinc-600: #786d62;
+  --color-zinc-500: #968a7c;
+  --color-zinc-400: #b5a89a;
+  --color-zinc-300: #d4c8ba;
+  --color-zinc-200: #e6dfd5;
+  --color-zinc-100: #f2eee8;
+  --color-zinc-50:  #fdfcfb;
+}
 
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  --background: #ffffff;
+  --foreground: #09090b;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
 }
 
 @theme inline {

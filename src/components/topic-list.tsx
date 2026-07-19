@@ -62,7 +62,7 @@ function TopicFilterSelect({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-9 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 hover:border-zinc-300 cursor-pointer"
+        className="flex h-9 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 hover:border-zinc-300 cursor-pointer dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900"
       >
         <Filter className="h-3.5 w-3.5 text-zinc-400" />
         <span>Filter: {current.label}</span>
@@ -70,7 +70,7 @@ function TopicFilterSelect({
       </button>
 
       {open && (
-        <ul className="absolute right-0 top-[calc(100%+0.25rem)] z-20 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+        <ul className="absolute right-0 top-[calc(100%+0.25rem)] z-20 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
           {FILTER_OPTIONS.map((option) => (
             <li key={option.value}>
               <button
@@ -80,8 +80,8 @@ function TopicFilterSelect({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center px-3 py-2.5 text-left text-xs font-medium transition hover:bg-zinc-50 cursor-pointer",
-                  option.value === value ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-zinc-700"
+                  "flex w-full items-center px-3 py-2.5 text-left text-xs font-medium transition hover:bg-zinc-50 cursor-pointer dark:hover:bg-zinc-900",
+                  option.value === value ? "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-900/30 dark:text-indigo-400" : "text-zinc-700 dark:text-zinc-300"
                 )}
               >
                 {option.label}
@@ -280,11 +280,11 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
   return (
     <div className="space-y-6">
       {/* Progress Tracking Card with Gauge */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-extrabold text-zinc-900 sm:text-3xl">{completedCount}</span>
+              <span className="text-2xl font-extrabold text-zinc-900 sm:text-3xl dark:text-zinc-50">{completedCount}</span>
               <span className="text-sm font-semibold text-zinc-400">/</span>
               <span className="text-sm font-semibold text-zinc-500">{activeCount}</span>
             </div>
@@ -306,21 +306,21 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
                 cx="32"
                 cy="32"
                 r="26"
-                className="stroke-zinc-100 fill-none"
+                className="stroke-zinc-100 fill-none dark:stroke-zinc-800"
                 strokeWidth="4"
               />
               <circle
                 cx="32"
                 cy="32"
                 r="26"
-                className="stroke-indigo-600 fill-none transition-all duration-700 ease-out"
+                className="stroke-indigo-600 fill-none transition-all duration-700 ease-out dark:stroke-indigo-500"
                 strokeWidth="4.5"
                 strokeDasharray="163.3"
                 strokeDashoffset={163.3 - (163.3 * Math.round((completedCount / (activeCount || 1)) * 100)) / 100}
                 strokeLinecap="round"
               />
             </svg>
-            <span className="absolute text-[11px] font-bold text-zinc-950 sm:text-xs">
+            <span className="absolute text-[11px] font-bold text-zinc-950 sm:text-xs dark:text-zinc-50">
               {Math.round((completedCount / (activeCount || 1)) * 100)}%
             </span>
           </div>
@@ -330,75 +330,75 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
       {/* Stats Cards Grid - Responsive layout matching filters */}
       <div className="grid grid-cols-5 gap-1 sm:gap-3">
         {/* Total Topics */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl">
+        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex flex-col items-center sm:items-start order-2 sm:order-1 mt-1 sm:mt-0">
-            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold">{activeCount}</p>
-            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5">Total</p>
+            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold dark:text-zinc-100">{activeCount}</p>
+            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5 dark:text-zinc-500">Total</p>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl dark:bg-indigo-950/40 dark:text-indigo-400">
             <FileText className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </div>
         </div>
 
         {/* Completed */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl">
+        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex flex-col items-center sm:items-start order-2 sm:order-1 mt-1 sm:mt-0">
-            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold">{completedCount}</p>
-            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5">
+            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold dark:text-zinc-100">{completedCount}</p>
+            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5 dark:text-zinc-500">
               <span className="hidden sm:inline">Completed</span>
               <span className="inline sm:hidden">Done</span>
             </p>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl dark:bg-emerald-950/40 dark:text-emerald-400">
             <CheckCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </div>
         </div>
 
         {/* In Progress */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl">
+        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex flex-col items-center sm:items-start order-2 sm:order-1 mt-1 sm:mt-0">
-            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold">{inProgressCount}</p>
-            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5">
+            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold dark:text-zinc-100">{inProgressCount}</p>
+            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5 dark:text-zinc-500">
               <span className="hidden sm:inline">In Progress</span>
               <span className="inline sm:hidden">Active</span>
             </p>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-sky-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-sky-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl dark:bg-sky-950/40 dark:text-sky-400">
             <Clock className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </div>
         </div>
 
         {/* Ready to Pickup */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl">
+        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex flex-col items-center sm:items-start order-2 sm:order-1 mt-1 sm:mt-0">
-            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold">{readyCount}</p>
-            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5">
+            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold dark:text-zinc-100">{readyCount}</p>
+            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5 dark:text-zinc-500">
               <span className="hidden sm:inline">Ready to Pickup</span>
               <span className="inline sm:hidden">Ready</span>
             </p>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50 text-amber-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50 text-amber-600 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl dark:bg-amber-950/40 dark:text-amber-400">
             <Package className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </div>
         </div>
 
         {/* Not Started */}
-        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl">
+        <div className="rounded-lg border border-zinc-200 bg-white p-1.5 shadow-sm flex flex-col items-center text-center sm:flex-row sm:justify-between sm:text-left sm:p-4 sm:rounded-xl dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex flex-col items-center sm:items-start order-2 sm:order-1 mt-1 sm:mt-0">
-            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold">{notStartedCount}</p>
-            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5">
+            <p className="text-xs font-bold text-zinc-950 sm:text-2xl sm:font-extrabold dark:text-zinc-100">{notStartedCount}</p>
+            <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider sm:text-xs sm:mt-0.5 dark:text-zinc-500">
               <span className="hidden sm:inline">Not Started</span>
               <span className="inline sm:hidden">Pending</span>
             </p>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-500 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-50 text-zinc-500 order-1 sm:order-2 sm:h-10 sm:w-10 sm:rounded-xl dark:bg-zinc-900/50 dark:text-zinc-400">
             <Circle className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold text-zinc-800 shrink-0">
+        <p className="text-sm font-semibold text-zinc-800 shrink-0 dark:text-zinc-200">
           Topics List
         </p>
 
@@ -411,7 +411,7 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
               placeholder="Search topics..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 bg-white py-1.5 pl-8 pr-3 text-xs font-medium text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-zinc-200 bg-white py-1.5 pl-8 pr-3 text-xs font-medium text-zinc-800 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
             />
           </div>
           <TopicFilterSelect value={filter} onChange={setFilter} />
@@ -425,8 +425,8 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
       )}
 
       {paginatedVisible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center">
-          <p className="font-medium text-zinc-900">No topics to show</p>
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">No topics to show</p>
           <p className="mt-1 text-sm text-zinc-500">
             Click <span className="font-medium">Sync from Drive</span> to pull
             your topic folders, or adjust the filters above.
@@ -435,11 +435,11 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
       ) : (
         <>
           {selectionMode && (
-            <div className="mb-3 flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2">
+            <div className="mb-3 flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-zinc-900">{selectedIds.size} selected</span>
-                <button type="button" onClick={selectAll} className="text-xs text-zinc-700 hover:underline">Select all</button>
-                <button type="button" onClick={clearSelection} className="text-xs text-zinc-700 hover:underline">Clear</button>
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{selectedIds.size} selected</span>
+                <button type="button" onClick={selectAll} className="text-xs text-zinc-700 hover:underline dark:text-zinc-400">Select all</button>
+                <button type="button" onClick={clearSelection} className="text-xs text-zinc-700 hover:underline dark:text-zinc-400">Clear</button>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -552,7 +552,7 @@ export function TopicList({ topics, onChange, enableLongPressSelection = false }
                             "relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-zinc-300 focus:z-20 focus:outline-offset-0 cursor-pointer",
                             active
                               ? "z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ring-indigo-600"
-                              : "text-zinc-950 hover:bg-zinc-50"
+                              : "text-zinc-950 hover:bg-zinc-50 dark:text-zinc-100 dark:hover:bg-zinc-900"
                           )}
                         >
                           {p}

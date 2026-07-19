@@ -26,29 +26,29 @@ const STATUS_OPTIONS: StatusOption[] = [
     value: "none",
     label: "Not started",
     icon: Circle,
-    triggerClassName: "text-zinc-600 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:border-zinc-300",
-    optionClassName: "text-zinc-700",
+    triggerClassName: "text-zinc-600 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:border-zinc-300 dark:bg-zinc-900/50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:border-zinc-700",
+    optionClassName: "text-zinc-700 dark:text-zinc-300",
   },
   {
     value: "in_progress",
     label: "In progress",
     icon: PlayCircle,
-    triggerClassName: "text-sky-700 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300",
-    optionClassName: "text-sky-700",
+    triggerClassName: "text-sky-700 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300 dark:bg-sky-950/40 dark:border-sky-900/50 dark:text-sky-400 dark:hover:bg-sky-900/50 dark:hover:border-sky-800",
+    optionClassName: "text-sky-700 dark:text-sky-400",
   },
   {
     value: "ready_to_pickup",
     label: "Ready to pickup",
     icon: Package,
-    triggerClassName: "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300",
-    optionClassName: "text-emerald-700",
+    triggerClassName: "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/50 dark:hover:border-emerald-800",
+    optionClassName: "text-emerald-700 dark:text-emerald-400",
   },
   {
     value: "completed",
     label: "Completed",
     icon: Check,
-    triggerClassName: "text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300",
-    optionClassName: "text-indigo-700",
+    triggerClassName: "text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-900/50 dark:hover:border-indigo-800",
+    optionClassName: "text-indigo-700 dark:text-indigo-400",
   },
 ];
 
@@ -126,7 +126,7 @@ export function TopicStatusSelect({ value, busy, onChange }: Props) {
         <ul
           role="listbox"
           aria-label="Topic status"
-          className="absolute left-0 top-[calc(100%+0.25rem)] z-20 w-full min-w-[11rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg"
+          className="absolute left-0 top-[calc(100%+0.25rem)] z-20 w-full min-w-[11rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950"
         >
           {STATUS_OPTIONS.map((option) => {
             const Icon = option.icon;
