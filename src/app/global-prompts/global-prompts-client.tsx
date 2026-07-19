@@ -327,10 +327,10 @@ export function GlobalPromptsClient({ user }: Props) {
     setEditModalOpen(item);
   };
 
-  // Filter prompts based on search query
+  // Filter prompts based on search query (by title only)
   const filteredPrompts = prompts.filter((p) => {
     const q = searchQuery.toLowerCase();
-    return p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q);
+    return p.title.toLowerCase().includes(q);
   });
 
   const isDbMissing = error && (
